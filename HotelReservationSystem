@@ -1,0 +1,234 @@
+package hotelmanagement; // Changed package name for better context
+
+import java.util.Random;
+import java.util.Scanner;
+
+// Class name changed to reflect the project's purpose
+public class HotelReservationSystem {
+    
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        int floorCount;
+        int roomsPerFloor;
+        
+        System.out.print("Enter the number of hotel floors: ");
+        floorCount = scanner.nextInt();
+        
+        System.out.print("Enter the number of rooms per floor: ");
+        roomsPerFloor = scanner.nextInt();
+
+        // The 2D array representing the hotel: true=Occupied, false=Free
+        boolean[][] hotelRooms = new boolean[floorCount][roomsPerFloor];
+
+        initializeRooms(hotelRooms);
+
+        System.out.println("----------------------------------------------------------------");
+        System.out.println("Welcome to the Hotel Reservation System");
+        System.out.println("----------------------------------------------------------------");
+
+        int option;
+
+        do {
+            System.out.println("\n---------------- MENU ----------------");
+            System.out.println("1) Display Current Hotel Plan");
+            System.out.println("2) Book a Room");
+            System.out.println("3) Find First Free Room (in range)");
+            System.out.println("4) Free a Room (Check Out)");
+            System.out.println("5) Find Three Consecutive Free Rooms");
+            System.out.println("6) Count Total Occupied Rooms");            
+            System.out.println("0) Exit System");
+            System.out.println("--------------------------------");
+            System.out.print("Please choose an option: ");
+            
+            // Handle non-integer input to prevent crash
+            if (scanner.hasNextInt()) {
+                option = scanner.nextInt();
+            } else {
+                System.out.println("Error: Invalid input type. Please enter a number.");
+                scanner.next(); // Consume the invalid input
+                option = -1;
+            }
+
+            switch (option) {
+                case 1:
+                    System.out.println("-------------------------------------------");
+                    System.out.println("**Reminder: X = Occupied, O = Free");
+                    System.out.println("-------------------------------------------");
+                    System.out.println("Hotel's Current Floor Plan :\n");
+                    printRooms(hotelRooms);
+                    break;
+                case 2:
+                    System.out.print("Enter the floor number (1-" + hotelRooms.length + "): ");
+                    int floorToBook = scanner.nextInt() - 1;
+                    
+                    System.out.print("Enter the room number to book (1-" + hotelRooms[0].length + "): ");
+                    int roomToBook = scanner.nextInt() - 1;
+                    
+                    bookRoom(hotelRooms, floorToBook, roomToBook);
+                    break;
+                case 3:               
+                    System.out.print("Enter a starting room number (1-" + hotelRooms[0].length + "): ");
+                    int startRoom = scanner.nextInt();
+                    System.out.print("Enter an ending room number (1-" + hotelRooms[0].length + "): ");
+                    int endRoom = scanner.nextInt();
+                    findFirstFree(hotelRooms, startRoom, endRoom);
+                    break;
+                case 4:
+                    System.out.print("Enter the floor number to check out (1-" + hotelRooms.length + "): ");
+                    int floorToFree = scanner.nextInt() - 1;                  
+                    System.out.print("Enter the room number to check out (1-" + hotelRooms[0].length + "): ");
+                    int roomToFree = scanner.nextInt() - 1;
+                    freeRoom(hotelRooms, floorToFree, roomToFree);
+                    break;
+                case 5:
+                    findConsecutiveBlock(hotelRooms);
+                    break;
+                case 6:
+                    int occupied = countOccupiedRooms(hotelRooms);
+                    System.out.println("Result: There are " + occupied + " occupied rooms in the Hotel.\n");
+                    break;
+                
+                case 0:
+                    break;
+                   
+                default:
+                    System.out.println("Error: Enter a valid option (0-6)!");
+                    break;
+            }
+
+        } while (option != 0);
+        
+        System.out.println("\n--------------------------------");
+        System.out.println("You have exited from the system! Goodbye.");
+        System.out.println("--------------------------------");
+    }
+    
+    // --- Finds the first block of three consecutive free rooms ---
+    public static void findConsecutiveBlock(boolean[][] hotelRooms) {
+        final int BLOCK_SIZE = 3;
+        
+        for (int i = 0; i < hotelRooms.length; i++) {
+            for (int j = 0; j <= hotelRooms[i].length - BLOCK_SIZE; j++) {
+                // Check if current room and the next two are free
+                if (!hotelRooms[i][j] && !hotelRooms[i][j + 1] && !hotelRooms[i][j + 2]) {
+                    System.out.println("Found: Rooms [" + (j + 1) + "], [" + (j + 2) + "], [" + (j + 3)+ "] are free on Floor [" + (i + 1) + "]");
+                    return;
+                }
+            }
+        }
+        System.out.println("Result: There are no free blocks of three consecutive rooms available at the moment.");
+    }
+    
+    // --- Counts the total number of occupied rooms ---
+    public static int countOccupiedRooms(boolean[][] hotelRooms) {
+
+        int counter = 0;
+        for (int i = 0; i < hotelRooms.length; i++) {
+            for (int j = 0; j < hotelRooms[i].length; j++) {
+                if (hotelRooms[i][j]) { // Equivalent to == true
+                    counter++;
+                }
+            }
+        }
+        return counter;
+    }
+    
+    // --- Finds the first free room within a specific room number range ---
+    public static void findFirstFree(boolean[][] hotelRooms, int start, int end) {
+        // Input validation (1-based index check)
+        if (start < 1 || end > hotelRooms[0].length || start > end) {
+            System.out.println("Error: Invalid room numbers. Please check the range (1-" + hotelRooms[0].length + ").");
+            return;
+        }
+
+        // Convert to 0-based array index
+        int startIndex = start - 1;
+        int endIndex = end - 1;
+
+        for (int i = 0; i < hotelRooms.length; i++) {
+            for (int j = startIndex; j <= endIndex; j++) {
+                if (!hotelRooms[i][j]) { // Equivalent to == false
+                    System.out.println("----------------------------------------------------------------------");
+                    System.out.println("The first free room found on Floor [" + (i + 1) + "] Room [" + (j + 1) + "]");
+                    System.out.println("----------------------------------------------------------------------");
+                    return;
+                }
+            }
+        }
+        System.out.println("Result: No free rooms found in the specified range on any floor.");
+    }
+
+    // --- Initializes room occupancy randomly ---
+    public static void initializeRooms(boolean [][]hotelRooms) {
+        Random random = new Random();
+        
+        for(int i=0; i < hotelRooms.length; ++i) { // Iterate over floors
+            for(int j=0; j < hotelRooms[i].length; ++j) { // Iterate over rooms
+                hotelRooms[i][j] = random.nextBoolean();
+            }
+        }         
+    }
+    
+    // --- Prints the current hotel floor plan ---
+    public static void printRooms(boolean [][]hotelRooms) {
+        // Print Room Numbers Header
+        System.out.print("Rooms: ");
+        for (int j = 0; j < hotelRooms[0].length; j++) {
+            System.out.printf(" [%2d]", (j + 1));
+        }
+        System.out.println("\n----------------------------------------------------");
+        
+        for (int i = 0; i < hotelRooms.length; i++) {
+            System.out.printf("Floor %d:", (i + 1));
+            for (int j = 0; j < hotelRooms[i].length; j++) {
+                if (!hotelRooms[i][j]) { // Free (O)
+                    System.out.print("[O]  ");
+                } else { // Occupied (X)
+                    System.out.print("[X]  ");
+                }
+            }
+            System.out.println();
+        }
+        System.out.println();
+    }
+    
+    // --- 2. Book a Room ---
+    public static void bookRoom(boolean[][] hotelRooms, int floor, int room) {
+        // Input validation (0-based index check)
+        if (floor < 0 || floor >= hotelRooms.length || room < 0 || room >= hotelRooms[0].length) {
+            System.out.println("Error: Invalid floor or room number. Please check your input.");
+            return;
+        }
+        
+        if (!hotelRooms[floor][room]) { // Room is Free
+            hotelRooms[floor][room] = true;
+            System.out.println("Success: Room [" + (room + 1) +"] on Floor [" + (floor + 1) + "] has been successfully booked.");
+            System.out.println("----------------------------------------------------------------\n");
+            printRooms(hotelRooms);
+        } else { // Room is Occupied
+            System.out.println("Failure: This room is already occupied.");
+            System.out.println("----------------------------------------------------------------\n");
+        }
+    }
+    
+    // --- 4. Free a Room (Check Out) ---
+    public static void freeRoom(boolean[][] hotelRooms, int floor, int room) {
+        // Input validation (0-based index check)
+        if (floor < 0 || floor >= hotelRooms.length || room < 0 || room >= hotelRooms[0].length) {
+            System.out.println("Error: Invalid floor or room number. Please check your input.");
+            return;
+        }
+        
+        if (hotelRooms[floor][room]) { // Room is Occupied
+            hotelRooms[floor][room] = false;
+            
+            System.out.println("Success: Room [" + (room + 1) +"] on Floor [" + (floor + 1) + "] has been successfully checked out.");
+            System.out.println("----------------------------------------------------------------\n");
+            printRooms(hotelRooms);
+        } else { // Room is already Free
+            
+            System.out.println("Failure: This room is already free/empty.");
+            System.out.println("----------------------------------------------------------------\n");
+        }
+    }
+}
